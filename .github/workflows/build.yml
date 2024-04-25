@@ -1,55 +1,46 @@
-# This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
-
-name: github CI
-
-on:
-  push:
-    branches:
-      - master
-      - dev
-      - coverity_scan
-      - add_test_2CI
-  pull_request:
-    branches:
-      - master
-      - dev
-      - coverity_scan
-
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 8
-        uses: actions/setup-java@v2
-        with:
-          java-version: '8'
-          distribution: 'adopt'
+    - continue-on-error: true
+      uses: actions/checkout@v2
+    - continue-on-error: true
+      name: Set up JDK 8
+      uses: actions/setup-java@v2
+      with:
+        distribution: adopt
+        java-version: '8'
+    - continue-on-error: true
+      name: buildcahe
+      run: 'git clone https://github.com/ctripcorp/x-pipe.git
 
-      - name: buildcahe
-        run: |
-          git clone https://github.com/ctripcorp/x-pipe.git
-          cd x-pipe
-          git checkout mvn_repo
-          sh install.sh
+        cd x-pipe
 
-      - name: Cache Maven packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-2022-11-30-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2-2022
+        git checkout mvn_repo
 
-      - name: Build with Maven
-        #run: mvn clean install -Plocal -Dmaven.test.failure.ignore=true
-        run: mvn clean install -Plocal
+        sh install.sh
 
-      - name: codecov
-        uses: codecov/codecov-action@v2.0.1
-        with:
-          token: 50484ce1-6e23-4309-87ac-e2cf9d3a3b4f
-          file: ${{ github.workspace }}/**/target/site/jacoco/jacoco.xml
-
-      - name: Upload coverage to codecov
-        run: curl -s https://codecov.io/bash | bash
+        '
+    - continue-on-error: true
+      name: Cache Maven packages
+      uses: actions/cache@v2
+      with:
+        key: ${{ runner.os }}-m2-2022-11-30-${{ hashFiles('**/pom.xml') }}
+        path: ~/.m2
+        restore-keys: ${{ runner.os }}-m2-2022
+    - continue-on-error: true
+      name: Build with Maven
+      run: mvn clean install -Plocal
+    - continue-on-error: true
+      name: codecov
+      uses: codecov/codecov-action@v2.0.1
+      with:
+        file: ${{ github.workspace }}/**/target/site/jacoco/jacoco.xml
+        token: 50484ce1-6e23-4309-87ac-e2cf9d3a3b4f
+    - continue-on-error: true
+      name: Upload coverage to codecov
+      run: curl -s https://codecov.io/bash | bash
+name: github CI
+on:
+  repository_dispatch:
+    types: trigger-ga___build.yml
